@@ -1,11 +1,13 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, ReactElement } from "react";
 import { pdf } from "@react-pdf/renderer";
 import JSZip from "jszip";
 import { parseSpreadsheet } from "@/lib/parse-spreadsheet";
-import { BillData } from "@/lib/types";
+import { BillData, TemplateId, TEMPLATES } from "@/lib/types";
 import { BillPDF } from "./BillPDF";
+import { PSEBillPDF } from "./PSEBillPDF";
+import { EversourceBillPDF } from "./EversourceBillPDF";
 
 async function fetchAsBase64(url: string, mime: string): Promise<string> {
   const res = await fetch(url);
@@ -22,10 +24,12 @@ export default function BillGenerator() {
   const [progress, setProgress] = useState(0);
   const [fileName, setFileName] = useState("");
   const [dragActive, setDragActive] = useState(false);
+  const [template, setTemplate] = useState<TemplateId>("att");
   const [images, setImages] = useState<{
-    logo: string;
+    attLogo: string;
     phoneIcon: string;
     waysToPay: string;
+    eversourceLogo: string;
   } | null>(null);
 
   useEffect(() => {
@@ -33,8 +37,9 @@ export default function BillGenerator() {
       fetchAsBase64("/att-logo.jpeg", "image/jpeg"),
       fetchAsBase64("/phone-icon.png", "image/png"),
       fetchAsBase64("/ways-to-pay.jpeg", "image/jpeg"),
-    ]).then(([logo, phoneIcon, waysToPay]) => {
-      setImages({ logo, phoneIcon, waysToPay });
+      fetchAsBase64("/eversource-logo.jpeg", "image/jpeg"),
+    ]).then(([attLogo, phoneIcon, waysToPay, eversourceLogo]) => {
+      setImages({ attLogo, phoneIcon, waysToPay, eversourceLogo });
     });
   }, []);
 
@@ -63,6 +68,33 @@ export default function BillGenerator() {
     [handleFile]
   );
 
+  const buildDoc = useCallback(
+    (bill: BillData): ReactElement | null => {
+      if (!images) return null;
+      switch (template) {
+        case "att":
+          return (
+            <BillPDF
+              data={bill}
+              logoBase64={images.attLogo}
+              phoneIconBase64={images.phoneIcon}
+              waysToPayBase64={images.waysToPay}
+            />
+          );
+        case "pse":
+          return <PSEBillPDF data={bill} />;
+        case "eversource":
+          return (
+            <EversourceBillPDF
+              data={bill}
+              logoBase64={images.eversourceLogo}
+            />
+          );
+      }
+    },
+    [template, images]
+  );
+
   const generateAll = useCallback(async () => {
     if (!images) return;
     setGenerating(true);
@@ -71,14 +103,8 @@ export default function BillGenerator() {
 
     for (let i = 0; i < bills.length; i++) {
       const bill = bills[i];
-      const doc = (
-        <BillPDF
-          data={bill}
-          logoBase64={images.logo}
-          phoneIconBase64={images.phoneIcon}
-          waysToPayBase64={images.waysToPay}
-        />
-      );
+      const doc = buildDoc(bill);
+      if (!doc) continue;
       const blob = await pdf(doc).toBlob();
       const safeName = `${bill.locationName} - ${bill.cityStateZip}`.replace(
         /[^a-zA-Z0-9 ,\-]/g,
@@ -96,29 +122,59 @@ export default function BillGenerator() {
     a.click();
     URL.revokeObjectURL(url);
     setGenerating(false);
-  }, [bills, images]);
+  }, [bills, images, buildDoc]);
 
-  const generateSingle = useCallback(async (bill: BillData) => {
-    if (!images) return;
-    const doc = (
-      <BillPDF
-        data={bill}
-        logoBase64={images.logo}
-        phoneIconBase64={images.phoneIcon}
-        waysToPayBase64={images.waysToPay}
-      />
-    );
-    const blob = await pdf(doc).toBlob();
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${bill.locationName} - ${bill.cityStateZip}.pdf`;
-    a.click();
-    URL.revokeObjectURL(url);
-  }, [images]);
+  const generateSingle = useCallback(
+    async (bill: BillData) => {
+      const doc = buildDoc(bill);
+      if (!doc) return;
+      const blob = await pdf(doc).toBlob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${bill.locationName} - ${bill.cityStateZip}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    },
+    [buildDoc]
+  );
+
+  const templateColors: Record<TemplateId, string> = {
+    att: "blue",
+    pse: "green",
+    eversource: "emerald",
+  };
 
   return (
     <div className="w-full max-w-5xl mx-auto">
+      {/* Template selector */}
+      <div className="mb-8">
+        <h2 className="text-sm font-medium text-zinc-500 mb-3">Select bill template</h2>
+        <div className="grid grid-cols-3 gap-3">
+          {TEMPLATES.map((t) => (
+            <button
+              key={t.id}
+              onClick={() => setTemplate(t.id)}
+              className={`relative p-4 rounded-xl border-2 text-left transition-all ${
+                template === t.id
+                  ? "border-blue-600 bg-blue-50 shadow-sm"
+                  : "border-zinc-200 hover:border-zinc-300 bg-white"
+              }`}
+            >
+              {template === t.id && (
+                <div className="absolute top-3 right-3 w-5 h-5 bg-blue-600 rounded-full flex items-center justify-center">
+                  <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" strokeWidth={3} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                  </svg>
+                </div>
+              )}
+              <p className="font-semibold text-zinc-900">{t.name}</p>
+              <p className="text-sm text-zinc-500 mt-1">{t.description}</p>
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Upload area */}
       <div
         className={`border-2 border-dashed rounded-xl p-12 text-center transition-colors cursor-pointer ${
@@ -188,6 +244,9 @@ export default function BillGenerator() {
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-zinc-800">
               {bills.length} bill{bills.length !== 1 ? "s" : ""} ready
+              <span className="text-sm font-normal text-zinc-500 ml-2">
+                ({TEMPLATES.find((t) => t.id === template)?.name} template)
+              </span>
             </h2>
             <button
               onClick={generateAll}

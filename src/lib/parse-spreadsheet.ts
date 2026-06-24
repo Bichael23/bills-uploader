@@ -35,36 +35,42 @@ function formatDate(raw: string | number | Date): string {
   return `${months[d.getMonth()]} ${String(d.getDate()).padStart(2, "0")}, ${d.getFullYear()}`;
 }
 
-function addDays(dateStr: string, days: number): string {
-  const d = new Date(dateStr);
-  if (isNaN(d.getTime())) {
-    const parts = dateStr.match(/(\w+)\s+(\d+),\s+(\d+)/);
-    if (!parts) return dateStr;
-    const months: Record<string, number> = {
-      Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5,
-      Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11,
-    };
-    const nd = new Date(+parts[3], months[parts[1]], +parts[2]);
-    nd.setDate(nd.getDate() + days);
-    return formatDate(nd);
-  }
-  d.setDate(d.getDate() + days);
-  return formatDate(d);
-}
-
-function previousMonth3rd(dateStr: string): string {
+function parseFormattedDate(dateStr: string): Date | null {
+  const parts = dateStr.match(/(\w+)\s+(\d+),\s+(\d+)/);
+  if (!parts) return null;
   const months: Record<string, number> = {
     Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5,
     Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11,
   };
-  const parts = dateStr.match(/(\w+)\s+(\d+),\s+(\d+)/);
-  if (!parts) return dateStr;
-  const month = months[parts[1]];
-  const year = +parts[3];
-  const prevMonth = month === 0 ? 11 : month - 1;
-  const prevYear = month === 0 ? year - 1 : year;
+  return new Date(+parts[3], months[parts[1]], +parts[2]);
+}
+
+function addDays(dateStr: string, days: number): string {
+  const d = parseFormattedDate(dateStr);
+  if (!d) return dateStr;
+  d.setDate(d.getDate() + days);
+  return formatDate(d);
+}
+
+function formatShortDate(dateStr: string): string {
+  const d = parseFormattedDate(dateStr);
+  if (!d) return dateStr;
+  return `${d.getMonth() + 1}/${String(d.getDate()).padStart(2, "0")}/${d.getFullYear()}`;
+}
+
+function previousMonth3rd(dateStr: string): string {
+  const d = parseFormattedDate(dateStr);
+  if (!d) return dateStr;
   const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const prevMonth = d.getMonth() === 0 ? 11 : d.getMonth() - 1;
   return `${monthNames[prevMonth]} 03`;
+}
+
+function previousMonthDate(dateStr: string, day: number): string {
+  const d = parseFormattedDate(dateStr);
+  if (!d) return dateStr;
+  const prev = new Date(d.getFullYear(), d.getMonth() - 1, day);
+  return formatDate(prev);
 }
 
 function randomAmount(min: number, max: number): string {
@@ -94,7 +100,7 @@ export function parseSpreadsheet(buffer: ArrayBuffer): BillData[] {
 
     const totalDue = row["Total Due"] || row["total_due"] || row["totalDue"]
       ? String(row["Total Due"] || row["total_due"] || row["totalDue"])
-      : randomAmount(85, 145);
+      : randomAmount(85, 200);
 
     const accountNumber = String(
       row["Account Number"] || row["account_number"] || generateAccountNumber()
@@ -103,6 +109,14 @@ export function parseSpreadsheet(buffer: ArrayBuffer): BillData[] {
     const foundationAccount = String(
       row["Foundation Account"] || row["foundation_account"] || generateFoundationAccount()
     );
+
+    const totalNum = parseFloat(totalDue);
+    const electricPct = 0.5 + Math.random() * 0.2;
+    const electricCharges = (totalNum * electricPct).toFixed(2);
+    const gasCharges = (totalNum * (1 - electricPct)).toFixed(2);
+    const supplyPct = 0.45 + Math.random() * 0.1;
+    const supplyCharges = (totalNum * supplyPct).toFixed(2);
+    const deliveryCharges = (totalNum * (1 - supplyPct)).toFixed(2);
 
     return {
       locationName: locationName.toUpperCase(),
@@ -113,10 +127,15 @@ export function parseSpreadsheet(buffer: ArrayBuffer): BillData[] {
       foundationAccount,
       invoiceNumber: generateInvoiceNumber(accountNumber),
       totalDue,
-      lastBill: randomAmount(90, 150),
+      lastBill: randomAmount(90, 220),
       paymentAmount: "",
       paymentDate: previousMonth3rd(issueDate),
       autoPayDate: addDays(issueDate, 5),
+      dueDate: addDays(issueDate, 20),
+      electricCharges,
+      gasCharges,
+      supplyCharges,
+      deliveryCharges,
     };
   }).map((bill) => ({
     ...bill,
