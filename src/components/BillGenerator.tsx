@@ -30,6 +30,7 @@ export default function BillGenerator() {
     phoneIcon: string;
     waysToPay: string;
     eversourceLogo: string;
+    pseLogo: string;
   } | null>(null);
 
   useEffect(() => {
@@ -38,8 +39,9 @@ export default function BillGenerator() {
       fetchAsBase64("/phone-icon.png", "image/png"),
       fetchAsBase64("/ways-to-pay.jpeg", "image/jpeg"),
       fetchAsBase64("/eversource-logo.jpeg", "image/jpeg"),
-    ]).then(([attLogo, phoneIcon, waysToPay, eversourceLogo]) => {
-      setImages({ attLogo, phoneIcon, waysToPay, eversourceLogo });
+      fetchAsBase64("/pse-logo.png", "image/png"),
+    ]).then(([attLogo, phoneIcon, waysToPay, eversourceLogo, pseLogo]) => {
+      setImages({ attLogo, phoneIcon, waysToPay, eversourceLogo, pseLogo });
     });
   }, []);
 
@@ -82,7 +84,7 @@ export default function BillGenerator() {
             />
           );
         case "pse":
-          return <PSEBillPDF data={bill} />;
+          return <PSEBillPDF data={bill} logoBase64={images.pseLogo} />;
         case "eversource":
           return (
             <EversourceBillPDF

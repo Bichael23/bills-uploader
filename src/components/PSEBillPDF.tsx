@@ -5,6 +5,7 @@ import {
   Page,
   Text,
   View,
+  Image,
   StyleSheet,
   Svg,
   Rect,
@@ -34,23 +35,6 @@ const s = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     marginBottom: 12,
-  },
-  logoArea: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  logoText: {
-    fontSize: 18,
-    fontFamily: "Helvetica-Bold",
-    color: darkText,
-    letterSpacing: 0.5,
-  },
-  logoSubtext: {
-    fontSize: 14,
-    color: darkText,
-    fontFamily: "Helvetica",
-    letterSpacing: 0.3,
   },
   infoBox: {
     backgroundColor: "#FFF3CD",
@@ -138,27 +122,7 @@ const s = StyleSheet.create({
   },
 });
 
-function PSELogo() {
-  return (
-    <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-      <View style={{
-        width: 36,
-        height: 36,
-        borderRadius: 18,
-        backgroundColor: "#2E86AB",
-        alignItems: "center",
-        justifyContent: "center",
-      }}>
-        <Text style={{ color: "white", fontSize: 10, fontFamily: "Helvetica-Bold" }}>PSE</Text>
-      </View>
-      <View>
-        <Text style={s.logoText}>PUGET SOUND ENERGY</Text>
-      </View>
-    </View>
-  );
-}
-
-export function PSEBillPDF({ data }: { data: BillData }) {
+export function PSEBillPDF({ data, logoBase64 }: { data: BillData; logoBase64: string }) {
   const totalNum = parseFloat(data.totalDue);
 
   return (
@@ -166,7 +130,7 @@ export function PSEBillPDF({ data }: { data: BillData }) {
       <Page size="LETTER" style={s.page}>
         {/* Header */}
         <View style={s.headerRow}>
-          <PSELogo />
+          <Image src={logoBase64} style={{ width: 200, height: 22 }} />
           <View style={s.infoBox}>
             <View style={s.infoRow}>
               <Text style={{ fontSize: 8, color: grayText }}>Issued:</Text>
@@ -375,7 +339,7 @@ export function PSEBillPDF({ data }: { data: BillData }) {
         <View style={s.footer}>
           <View style={s.footerRow}>
             <View style={s.couponLeft}>
-              <PSELogo />
+              <Image src={logoBase64} style={{ width: 180, height: 20 }} />
               <Text style={{ fontSize: 9, fontFamily: "Helvetica-Bold", marginTop: 8, marginBottom: 4 }}>
                 Your Ways to Pay
               </Text>
