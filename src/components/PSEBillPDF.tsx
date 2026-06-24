@@ -34,6 +34,7 @@ const s = StyleSheet.create({
   headerRow: {
     flexDirection: "row",
     justifyContent: "space-between",
+    alignItems: "flex-start",
     marginBottom: 12,
   },
   infoBox: {
@@ -41,7 +42,7 @@ const s = StyleSheet.create({
     borderWidth: 1,
     borderColor: orange,
     padding: 8,
-    width: 200,
+    width: 190,
   },
   infoRow: {
     flexDirection: "row",
@@ -61,7 +62,6 @@ const s = StyleSheet.create({
     borderColor: "#B8D4E8",
     padding: 8,
     marginBottom: 12,
-    width: 280,
   },
   sectionTitle: {
     fontSize: 11,
@@ -130,10 +130,8 @@ export function PSEBillPDF({ data, logoBase64 }: { data: BillData; logoBase64: s
       <Page size="LETTER" style={s.page}>
         {/* Header */}
         <View style={s.headerRow}>
-          <View style={{ width: "55%" }}>
-            <Image src={logoBase64} style={{ width: 200, height: 22 }} />
-          </View>
-          <View style={[s.infoBox, { width: "40%" }]}>
+          <Image src={logoBase64} style={{ width: 200, height: 22 }} />
+          <View style={s.infoBox}>
             <View style={s.infoRow}>
               <Text style={{ fontSize: 8, color: grayText }}>Issued:</Text>
               <Text style={{ fontSize: 8 }}>{data.issueDate}</Text>
@@ -146,7 +144,7 @@ export function PSEBillPDF({ data, logoBase64 }: { data: BillData; logoBase64: s
               <Text style={{ fontSize: 9, fontFamily: "Helvetica-Bold", color: "white" }}>DUE DATE</Text>
               <Text style={{ fontSize: 9, fontFamily: "Helvetica-Bold", color: "white" }}>{data.dueDate}</Text>
             </View>
-            <View style={[s.dueRow, { backgroundColor: orange, marginTop: 1 }]}>
+            <View style={[s.dueRow, { marginTop: 1 }]}>
               <Text style={{ fontSize: 9, fontFamily: "Helvetica-Bold", color: "white" }}>TOTAL DUE</Text>
               <Text style={{ fontSize: 9, fontFamily: "Helvetica-Bold", color: "white" }}>${data.totalDue}</Text>
             </View>
@@ -157,9 +155,9 @@ export function PSEBillPDF({ data, logoBase64 }: { data: BillData; logoBase64: s
         <Text style={{ fontSize: 7, color: grayText, textAlign: "right", marginBottom: 4 }}>Page 1 of 3</Text>
 
         {/* Two column layout */}
-        <View style={{ flexDirection: "row", gap: 12 }}>
+        <View style={{ flexDirection: "row" }}>
           {/* Left column */}
-          <View style={{ width: "48%" }}>
+          <View style={{ width: "48%", paddingRight: 10 }}>
             {/* Serving box */}
             <View style={s.servingBox}>
               <Text style={{ fontSize: 10, fontFamily: "Helvetica-Bold", marginBottom: 4 }}>
@@ -242,7 +240,7 @@ export function PSEBillPDF({ data, logoBase64 }: { data: BillData; logoBase64: s
           </View>
 
           {/* Right column */}
-          <View style={{ width: "50%" , flexShrink: 1 }}>
+          <View style={{ width: "52%" }}>
             {/* Account Summary */}
             <Text style={{ fontSize: 12, fontFamily: "Helvetica-Bold", marginBottom: 6 }}>
               Your Account Summary
