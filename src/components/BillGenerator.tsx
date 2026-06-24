@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect, ReactElement } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { pdf } from "@react-pdf/renderer";
 import JSZip from "jszip";
 import { parseSpreadsheet } from "@/lib/parse-spreadsheet";
@@ -69,7 +69,7 @@ export default function BillGenerator() {
   );
 
   const buildDoc = useCallback(
-    (bill: BillData): ReactElement | null => {
+    (bill: BillData) => {
       if (!images) return null;
       switch (template) {
         case "att":
@@ -105,7 +105,8 @@ export default function BillGenerator() {
       const bill = bills[i];
       const doc = buildDoc(bill);
       if (!doc) continue;
-      const blob = await pdf(doc).toBlob();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const blob = await pdf(doc as any).toBlob();
       const safeName = `${bill.locationName} - ${bill.cityStateZip}`.replace(
         /[^a-zA-Z0-9 ,\-]/g,
         ""
@@ -128,7 +129,8 @@ export default function BillGenerator() {
     async (bill: BillData) => {
       const doc = buildDoc(bill);
       if (!doc) return;
-      const blob = await pdf(doc).toBlob();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const blob = await pdf(doc as any).toBlob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
