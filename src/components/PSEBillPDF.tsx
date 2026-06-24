@@ -41,7 +41,7 @@ const s = StyleSheet.create({
     borderWidth: 1,
     borderColor: orange,
     padding: 8,
-    width: 220,
+    width: 200,
   },
   infoRow: {
     flexDirection: "row",
@@ -130,8 +130,10 @@ export function PSEBillPDF({ data, logoBase64 }: { data: BillData; logoBase64: s
       <Page size="LETTER" style={s.page}>
         {/* Header */}
         <View style={s.headerRow}>
-          <Image src={logoBase64} style={{ width: 200, height: 22 }} />
-          <View style={s.infoBox}>
+          <View style={{ width: "55%" }}>
+            <Image src={logoBase64} style={{ width: 200, height: 22 }} />
+          </View>
+          <View style={[s.infoBox, { width: "40%" }]}>
             <View style={s.infoRow}>
               <Text style={{ fontSize: 8, color: grayText }}>Issued:</Text>
               <Text style={{ fontSize: 8 }}>{data.issueDate}</Text>
@@ -155,9 +157,9 @@ export function PSEBillPDF({ data, logoBase64 }: { data: BillData; logoBase64: s
         <Text style={{ fontSize: 7, color: grayText, textAlign: "right", marginBottom: 4 }}>Page 1 of 3</Text>
 
         {/* Two column layout */}
-        <View style={{ flexDirection: "row", gap: 16 }}>
+        <View style={{ flexDirection: "row", gap: 12 }}>
           {/* Left column */}
-          <View style={{ width: "50%" }}>
+          <View style={{ width: "48%" }}>
             {/* Serving box */}
             <View style={s.servingBox}>
               <Text style={{ fontSize: 10, fontFamily: "Helvetica-Bold", marginBottom: 4 }}>
@@ -240,7 +242,7 @@ export function PSEBillPDF({ data, logoBase64 }: { data: BillData; logoBase64: s
           </View>
 
           {/* Right column */}
-          <View style={{ width: "50%" }}>
+          <View style={{ width: "50%" , flexShrink: 1 }}>
             {/* Account Summary */}
             <Text style={{ fontSize: 12, fontFamily: "Helvetica-Bold", marginBottom: 6 }}>
               Your Account Summary
